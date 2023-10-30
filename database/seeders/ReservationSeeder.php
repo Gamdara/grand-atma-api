@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Reservation;
 use App\Models\ReservationExtend;
+use App\Models\ReservationRoom;
 use App\Models\Room;
+use App\Models\RoomType;
 use App\Models\Service;
 use App\Models\Transaction;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -21,15 +23,16 @@ class ReservationSeeder extends Seeder
         //personal belum
         Reservation::factory()->count(5)->create()
         ->each(function (Reservation $reservation) {
-            $rooms = Room::all()->random(rand(1,5))->mapWithKeys(function (Room $room) {
-                return [$room->room_id =>
-                [
-                    'amount' => fake()->numberBetween(1,3),
-                    'fare' => $room->roomType->fare
-                ]
-                ];
+            RoomType::all()->random(rand(1,2))->mapWithKeys(function (RoomType $roomType) use($reservation) {
+                $reservationRoomId = $reservation->reservationRooms()->insertGetId([
+                    'reservation_id' => $reservation->reservation_id,
+                    'room_type_id' => $roomType->room_type_id,
+                    'fare' => $roomType->fare,
+                ]);
+                // echo($reservationRoomId);
+                ReservationRoom::find($reservationRoomId)->rooms()->attach(Room::where('room_type_id',$roomType->room_type_id)->inRandomOrder()->limit(rand(1,5))->get());
+                return [];
             });
-            $reservation->rooms()->attach($rooms);
 
             $services = Service::all()->random(rand(1,5))->mapWithKeys(function (Service $service) {
                 return [$service->service_id =>
@@ -45,15 +48,15 @@ class ReservationSeeder extends Seeder
         //group belum
         Reservation::factory()->count(5)->group()->create()
         ->each(function (Reservation $reservation) {
-            $rooms = Room::all()->random(rand(1,5))->mapWithKeys(function (Room $room) {
-                return [$room->room_id =>
-                [
-                    'amount' => fake()->numberBetween(1,3),
-                    'fare' => $room->roomType->fare
-                ]
-                ];
+            RoomType::all()->random(rand(1,2))->mapWithKeys(function (RoomType $roomType) use($reservation) {
+                $reservationRoomId = $reservation->reservationRooms()->insertGetId([
+                    'reservation_id' => $reservation->reservation_id,
+                    'room_type_id' => $roomType->room_type_id,
+                    'fare' => $roomType->fare,
+                ]);
+                ReservationRoom::find($reservationRoomId)->rooms()->attach(Room::where('room_type_id',$roomType->room_type_id)->inRandomOrder()->limit(rand(1,5))->get());
+                return [];
             });
-            $reservation->rooms()->attach($rooms);
 
             $services = Service::all()->random(rand(1,5))->mapWithKeys(function (Service $service) {
                 return [$service->service_id =>
@@ -69,19 +72,19 @@ class ReservationSeeder extends Seeder
         // //personal baru bayr
         Reservation::factory()->count(5)
         ->state(function (array $attributes) {
-            return ['check_in' => $attributes['start_date'], 'status'=>'bailed'];
+            return ['check_in' => $attributes['start_date'], 'status'=>'confirmed'];
         })
         ->create()
         ->each(function (Reservation $reservation) {
-            $rooms = Room::all()->random(rand(1,5))->mapWithKeys(function (Room $room) {
-                return [$room->room_id =>
-                [
-                    'amount' => fake()->numberBetween(1,3),
-                    'fare' => $room->roomType->fare
-                ]
-                ];
+            RoomType::all()->random(rand(1,2))->mapWithKeys(function (RoomType $roomType) use($reservation) {
+                $reservationRoomId = $reservation->reservationRooms()->insertGetId([
+                    'reservation_id' => $reservation->reservation_id,
+                    'room_type_id' => $roomType->room_type_id,
+                    'fare' => $roomType->fare,
+                ]);
+                ReservationRoom::find($reservationRoomId)->rooms()->attach(Room::where('room_type_id',$roomType->room_type_id)->inRandomOrder()->limit(rand(1,5))->get());
+                return [];
             });
-            $reservation->rooms()->attach($rooms);
 
             $services = Service::all()->random(rand(1,5))->mapWithKeys(function (Service $service) {
                 return [$service->service_id =>
@@ -102,20 +105,20 @@ class ReservationSeeder extends Seeder
         // //personal baru bayr
         Reservation::factory()->count(5)
         ->state(function (array $attributes) {
-            return ['check_in' => $attributes['start_date'], 'status'=>'bailed'];
+            return ['check_in' => $attributes['start_date'], 'status'=>'confirmed'];
         })
         ->group()
         ->create()
         ->each(function (Reservation $reservation) {
-            $rooms = Room::all()->random(rand(1,5))->mapWithKeys(function (Room $room) {
-                return [$room->room_id =>
-                [
-                    'amount' => fake()->numberBetween(1,3),
-                    'fare' => $room->roomType->fare
-                ]
-                ];
+            RoomType::all()->random(rand(1,2))->mapWithKeys(function (RoomType $roomType) use($reservation) {
+                $reservationRoomId = $reservation->reservationRooms()->insertGetId([
+                    'reservation_id' => $reservation->reservation_id,
+                    'room_type_id' => $roomType->room_type_id,
+                    'fare' => $roomType->fare,
+                ]);
+                ReservationRoom::find($reservationRoomId)->rooms()->attach(Room::where('room_type_id',$roomType->room_type_id)->inRandomOrder()->limit(rand(1,5))->get());
+                return [];
             });
-            $reservation->rooms()->attach($rooms);
 
             $services = Service::all()->random(rand(1,5))->mapWithKeys(function (Service $service) {
                 return [$service->service_id =>
@@ -140,15 +143,15 @@ class ReservationSeeder extends Seeder
         })
         ->create()
         ->each(function (Reservation $reservation) {
-            $rooms = Room::all()->random(rand(1,5))->mapWithKeys(function (Room $room) {
-                return [$room->room_id =>
-                [
-                    'amount' => fake()->numberBetween(1,3),
-                    'fare' => $room->roomType->fare
-                ]
-                ];
+            RoomType::all()->random(rand(1,2))->mapWithKeys(function (RoomType $roomType) use($reservation) {
+                $reservationRoomId = $reservation->reservationRooms()->insertGetId([
+                    'reservation_id' => $reservation->reservation_id,
+                    'room_type_id' => $roomType->room_type_id,
+                    'fare' => $roomType->fare,
+                ]);
+                ReservationRoom::find($reservationRoomId)->rooms()->attach(Room::where('room_type_id',$roomType->room_type_id)->inRandomOrder()->limit(rand(1,5))->get());
+                return [];
             });
-            $reservation->rooms()->attach($rooms);
 
             Transaction::factory()->count(1)
             ->state(function (array $attributes) use($reservation) {
@@ -179,15 +182,15 @@ class ReservationSeeder extends Seeder
         ->group()
         ->create()
         ->each(function (Reservation $reservation) {
-            $rooms = Room::all()->random(rand(1,5))->mapWithKeys(function (Room $room) {
-                return [$room->room_id =>
-                [
-                    'amount' => fake()->numberBetween(1,3),
-                    'fare' => $room->roomType->fare
-                ]
-                ];
+            RoomType::all()->random(rand(1,2))->mapWithKeys(function (RoomType $roomType) use($reservation) {
+                $reservationRoomId = $reservation->reservationRooms()->insertGetId([
+                    'reservation_id' => $reservation->reservation_id,
+                    'room_type_id' => $roomType->room_type_id,
+                    'fare' => $roomType->fare,
+                ]);
+                ReservationRoom::find($reservationRoomId)->rooms()->attach(Room::where('room_type_id',$roomType->room_type_id)->inRandomOrder()->limit(rand(1,5))->get());
+                return [];
             });
-            $reservation->rooms()->attach($rooms);
 
             $services = Service::all()->random(rand(1,5))->mapWithKeys(function (Service $service) {
                 return [$service->service_id =>
@@ -219,15 +222,15 @@ class ReservationSeeder extends Seeder
         })
         ->create()
         ->each(function (Reservation $reservation) {
-            $rooms = Room::all()->random(rand(1,5))->mapWithKeys(function (Room $room) {
-                return [$room->room_id =>
-                [
-                    'amount' => fake()->numberBetween(1,3),
-                    'fare' => $room->roomType->fare
-                ]
-                ];
+            RoomType::all()->random(rand(1,2))->mapWithKeys(function (RoomType $roomType) use($reservation) {
+                $reservationRoomId = $reservation->reservationRooms()->insertGetId([
+                    'reservation_id' => $reservation->reservation_id,
+                    'room_type_id' => $roomType->room_type_id,
+                    'fare' => $roomType->fare,
+                ]);
+                ReservationRoom::find($reservationRoomId)->rooms()->attach(Room::where('room_type_id',$roomType->room_type_id)->inRandomOrder()->limit(rand(1,5))->get());
+                return [];
             });
-            $reservation->rooms()->attach($rooms);
 
             Transaction::factory()->count(1)
             ->state(function (array $attributes) use($reservation) {

@@ -20,6 +20,6 @@ class Customer extends Model
 
     public function reservation(): HasMany
     {
-        return $this->hasMany(Reservation::class,'reservation_id','reservation_id');
+        return $this->hasMany(Reservation::class,'customer_id','customer_id');
     }
 }

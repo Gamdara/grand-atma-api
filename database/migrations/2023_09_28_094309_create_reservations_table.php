@@ -29,7 +29,7 @@ return new class extends Migration
             $table->timestamp('check_in')->nullable();
             $table->timestamp('check_out')->nullable();
             $table->string('status');
-            $table->string('request');
+            $table->string('request')->default('');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate();
         });

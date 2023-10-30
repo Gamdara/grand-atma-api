@@ -21,7 +21,6 @@ public function roomType(): BelongsTo
 
     public function reservations(): BelongsToMany
     {
-        return $this->belongsToMany(Reservation::class, 'reservation_rooms', 'room_id','reservation_id')
-            ->withPivot('fare','amount');
+        return $this->belongsToMany(Reservation::class, 'reservation_rooms', 'room_id','reservation_id');
     }
 }

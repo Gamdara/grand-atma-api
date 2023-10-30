@@ -34,8 +34,9 @@ class SeasonController extends Controller
         try{
             $validated = $request->validate([
                 'name' => 'required',
-                'unit' => 'required',
-                'fare' => 'required|integer|gt:0',
+                'discount_type' => 'required',
+                'start_date' => 'required|date|after:2 months',
+                'end_date' => 'required|date|after:start_date',
             ]);
 
             $Season = Season::create($validated);
@@ -83,8 +84,9 @@ class SeasonController extends Controller
         try{
             $validated = $request->validate([
                 'name' => 'required',
-                'unit' => 'required',
-                'fare' => 'required|integer|gt:0',
+                'discount_type' => 'required',
+                'start_date' => 'required|date|after_or_equal:'.$Season->start_date,
+                'end_date' => 'required|date|after:start_date',
             ]);
 
             $Season->update($validated);
