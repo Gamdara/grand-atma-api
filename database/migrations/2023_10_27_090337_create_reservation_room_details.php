@@ -20,7 +20,6 @@ return new class extends Migration
 
         DB::unprepared('CREATE TRIGGER add_reservation_room_detail AFTER INSERT ON `reservation_room_details` FOR EACH ROW
         BEGIN
-
             SET @v_is_smoking = (SELECT is_smoking from rooms where room_id = NEW.room_id);
 
             IF @v_is_smoking is true THEN

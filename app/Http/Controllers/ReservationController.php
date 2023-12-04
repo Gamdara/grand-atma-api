@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CustomerMail;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Reservation;
 use App\Http\Controllers\Controller;
 use App\Models\Room;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -47,7 +52,6 @@ class ReservationController extends Controller
      */
     public function addReservation(Request $request)
     {
-        //
         try{
             $validatedRes = $request->validate([
                 'customer_id' => 'required',
@@ -98,7 +102,7 @@ class ReservationController extends Controller
                 }
 
             return $this->baseResponse(
-                true,'Insert success',$invalidRoom, 200
+                true,'Insert success',$reservation, 200
             );
         }
         catch(ValidationException $e ){
@@ -113,6 +117,180 @@ class ReservationController extends Controller
         }
     }
 
+    public function getReservationHistory(Request $request){
+        try{
+            return $this->baseResponse(
+                true,'get success',
+                $request->user()->customer->reservation
+                , 200
+            );
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),$request->user()->customer, 400
+            );
+        }
+    }
+
+    public function doConfirmReservationGroup(Request $request, Reservation $reservation){
+        try{
+            $req = $request->validate([
+                'amount' => 'required|integer|gte:'.($reservation->reservationRooms()->sum('total') / 2).'|lte:'.$reservation->reservationRooms()->sum('total'),
+            ]);
+
+            // $reservation->transaction()->delete();
+            $reservation->transaction()->create([
+                'type' => 'bail',
+                'amount' => $req['amount'],
+            ]);
+            $reservation->update(['status' => 'confirmed']);
+
+            $res = Reservation::with('customer','customer.user','reservationExtend','reservationRooms','reservationRooms.roomType','reservationRooms.rooms','services','transaction','frontOffice','sales')->find($reservation->reservation_id);
+
+            $html = view('emails.terima-group')->with('res', $res)->render();
+
+            $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadHTML($html);
+            $pdf->getDomPDF()->setHttpContext(
+                stream_context_create([
+                    'ssl' => [
+                        'allow_self_signed'=> TRUE,
+                        'verify_peer' => FALSE,
+                        'verify_peer_name' => FALSE,
+                    ]
+                ])
+            );
+
+            Mail::to('uiop7703@gmail.com')->send(new CustomerMail($pdf->output()));
+            return $this->baseResponse(
+                true,'confirmed success',
+                $res
+                , 200
+            );
+        }
+        catch(ValidationException $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),$e->errors(), 400
+            );
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),'', 400
+            );
+        }
+    }
+
+    public function doConfirmReservation(Request $request, Reservation $reservation){
+        try{
+            $reservation->transaction()->create([
+                'type' => 'bail',
+                'amount' => $request['amount'],
+            ]);
+            $reservation->update(['status' => 'confirmed']);
+
+            $res = Reservation::with('customer','customer.user','reservationExtend','reservationRooms','reservationRooms.roomType','reservationRooms.rooms','services','transaction','frontOffice','sales')->find($reservation->reservation_id);
+
+            $html = view('emails.terima-personal')->with('res', $res)->render();
+            // return $html;
+
+            $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadHTML($html);
+            $pdf->getDomPDF()->setHttpContext(
+                stream_context_create([
+                    'ssl' => [
+                        'allow_self_signed'=> TRUE,
+                        'verify_peer' => FALSE,
+                        'verify_peer_name' => FALSE,
+                    ]
+                ])
+            );
+
+            Mail::to('uiop7703@gmail.com')->send(new CustomerMail($pdf->output()));
+            return $this->baseResponse(
+                true,'confirmed success',
+                $res
+                , 200
+            );
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),'', 400
+            );
+        }
+    }
+
+    public function doCancelReservation(Request $request, Reservation $reservation){
+        try{
+            $reservation->update(['status' => 'cancelled']);
+            return $this->baseResponse(
+                true,'reservation cancelled',
+                $reservation
+                , 200
+            );
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),$request->user()->customer, 400
+            );
+        }
+    }
+
+    public function getReservationReport(Request $request, Reservation $reservation){
+        try{
+
+            $req = $request->validate([
+                'type' => 'required',
+            ]);
+
+            $res = Reservation::with('customer','customer.user','reservationExtend','reservationRooms','reservationRooms.roomType','reservationRooms.rooms','services','transaction','frontOffice','sales')->find($reservation->reservation_id);
+
+            if($req['type'] == 'group')
+            $html = view('emails.terima-group')->with('res', $res)->render();
+            else
+            $html = view('emails.terima-personal')->with('res', $res)->render();
+
+            $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadHTML($html);
+            $pdf->getDomPDF()->setHttpContext(
+                stream_context_create([
+                    'ssl' => [
+                        'allow_self_signed'=> TRUE,
+                        'verify_peer' => FALSE,
+                        'verify_peer_name' => FALSE,
+                    ]
+                ])
+            );
+
+            return $pdf->stream();
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),'', 400
+            );
+        }
+    }
+
+    public function getTandaTerima(Request $request, Reservation $reservation){
+        try{
+
+            $res = Reservation::with('customer','customer.user','reservationExtend','reservationRooms','reservationRooms.roomType','reservationRooms.rooms','services','transaction','frontOffice','sales')->find($reservation->reservation_id);
+
+            if($res['type'] == 'group')
+            $html = view('emails.terima-group')->with('res', $res)->render();
+            else
+            $html = view('emails.terima-personal')->with('res', $res)->render();
+
+
+            return $this->baseResponse(
+                true,'success',
+                $html
+                , 200
+            );
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),'', 400
+            );
+        }
+    }
+
     /**
      * Display the specified resource.
      */
@@ -121,7 +299,7 @@ class ReservationController extends Controller
         //
         try{
             return $this->baseResponse(
-                true,'get success',Reservation::with('customer','customer.user','reservationExtend','reservationRooms','reservationRooms.roomType','reservationRooms.rooms','services','transaction','frontOffice','pic')->find($Reservation->reservation_id), 200
+                true,'get success',Reservation::with('customer','customer.user','reservationExtend','reservationRooms','reservationRooms.roomType','reservationRooms.rooms','services','transaction','frontOffice','sales')->find($Reservation->reservation_id), 200
             );
         }
         catch(\Exception $e ){

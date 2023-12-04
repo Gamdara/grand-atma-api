@@ -33,7 +33,7 @@ class ServiceController extends Controller
         //
         try{
             $validated = $request->validate([
-                'name' => 'required',
+                'name' => 'required|unique:services',
                 'unit' => 'required',
                 'fare' => 'required|integer|gt:0',
             ]);

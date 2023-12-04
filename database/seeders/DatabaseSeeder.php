@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             CouponSeeder::class,
             RoomTypeSeeder::class,
             SeasonSeeder::class,
-            // ReservationSeeder::class,
+            ReservationSeeder::class,
         ]);
     }
 }

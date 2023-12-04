@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Customer;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -16,7 +17,7 @@ class UserSeeder extends Seeder
     {
         //
         // dd(Role::where('name', 'owner'));
-        User::factory()->count(6)->sequence(
+        User::factory()->count(5)->sequence(
             [
                 'role_id' => Role::where('name', 'owner')->first()->role_id,
                 'email' => 'owner@mail.com'
@@ -36,11 +37,15 @@ class UserSeeder extends Seeder
             [
                 'role_id' => Role::where('name', 'admin')->first()->role_id,
                 'email' => 'admin@mail.com'
-            ],
-            [
-                'role_id' => Role::where('name', 'customer')->first()->role_id,
-                'email' => 'customer@mail.com'
             ]
         )->create();
+
+        User::factory()->count(1)->state(function (array $attributes) {
+            return ['role_id' => Role::where('name', 'customer')->first()->role_id, 'email' => 'customer@mail.com'];
+        })
+        ->has(
+            Customer::factory()->count(1)
+        )
+        ->create();
     }
 }

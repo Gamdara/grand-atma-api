@@ -18,27 +18,26 @@ class RoomTypeFactory extends Factory
     {
         return [
             //
-            'details' => '
-            AC
-            Air minum kemasan gratis
-            Brankas dalam kamar (ukuran laptop)
-            Fasilitas membuat kopi/teh
-            Jubah mandi
-            Layanan kamar (24 jam)
-            Meja tulis
-            Minibar
-            Pembersihan kamar harian
-            Pengering rambut
-            Peralatan mandi gratis
-            Sandal
-            Telepon
-            Tempat tidur ekstra (biaya tambahan)
-            Tempat tidur premium
-            Tirai kedap-cahaya
-            TV kabel
-            TV LCD
-            Wi-Fi gratis
-            '
+            'details' =>
+'AC
+Air minum kemasan gratis
+Brankas dalam kamar
+Fasilitas membuat kopi/teh
+Jubah mandi
+Layanan kamar (24 jam)
+Meja tulis
+Minibar
+Pembersihan kamar harian
+Pengering rambut
+Peralatan mandi gratis
+Sandal
+Telepon
+Tempat tidur ekstra
+Tempat tidur premium
+Tirai kedap-cahaya
+TV kabel
+TV LCD
+Wi-Fi gratis'
         ];
     }
 }

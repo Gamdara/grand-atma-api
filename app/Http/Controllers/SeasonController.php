@@ -38,6 +38,24 @@ class SeasonController extends Controller
                 'start_date' => 'required|date|after:2 months',
                 'end_date' => 'required|date|after:start_date',
             ]);
+            $dates = [$validated['start_date'], $validated['end_date']];
+
+            $existingSeason = Season::where(function ($query) use($dates) {
+                $query->where(function($query)use($dates){
+                    $query->whereBetween('start_date',$dates)
+                    ->orWhereBetween('end_date',$dates);
+                })->orWhere(function($query)use($dates){
+                    $query->whereDate('start_date','<=',$dates[0])
+                    ->whereDate('end_date','>=',$dates[1]);
+                });
+            })->count();
+
+            if($existingSeason > 0){
+                throw ValidationException::withMessages([
+                    'start_date' => ['Sudah ada season di tanggal terkait'],
+                ]);
+            }
+
 
             $Season = Season::create($validated);
 
@@ -89,6 +107,24 @@ class SeasonController extends Controller
                 'end_date' => 'required|date|after:start_date',
             ]);
 
+            $dates = [$validated['start_date'], $validated['end_date']];
+
+            $existingSeason = Season::where(function ($query) use($dates) {
+                $query->where(function($query)use($dates){
+                    $query->whereBetween('start_date',$dates)
+                    ->orWhereBetween('end_date',$dates);
+                })->orWhere(function($query)use($dates){
+                    $query->whereDate('start_date','<=',$dates[0])
+                    ->whereDate('end_date','>=',$dates[1]);
+                });
+            })->whereNot('season_id',$Season->season_id)->count();
+
+            if($existingSeason > 0){
+                throw ValidationException::withMessages([
+                    'start_date' => ['Sudah ada season di tanggal terkait'],
+                ]);
+            }
+
             $Season->update($validated);
 
             return $this->baseResponse(
@@ -132,7 +168,7 @@ class SeasonController extends Controller
         try{
             $validated = $request->validate([
                 'room_type_id' => 'required|integer',
-                'discount_amount' => 'required|integer|gt:0',
+                'discount_amount' => 'required|integer',
             ]);
 
             $Season->roomType()->attach(
@@ -161,7 +197,7 @@ class SeasonController extends Controller
         try{
             $validated = $request->validate([
                 'room_type_id' => 'required|integer',
-                'discount_amount' => 'required|integer|gt:0',
+                'discount_amount' => 'required|integer',
             ]);
 
             $Season->roomType()->updateExistingPivot($validated['room_type_id'],

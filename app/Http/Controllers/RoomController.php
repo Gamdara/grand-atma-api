@@ -17,6 +17,10 @@ class RoomController extends Controller
         //
         try{
             $data = RoomType::all();
+            foreach ($data as $key => $value) {
+                $value->season = $value->season(now(), now())->get();
+            }
+
             return $this->baseResponse(
                 true,'get success',$data, 200
             );
@@ -36,7 +40,7 @@ class RoomController extends Controller
         //
         try{
             $validated = $request->validate([
-                'name' => 'required',
+                'name' => 'required|unique:room_types',
                 'img' => 'required',
                 'fare' => 'required|integer|gt:0',
                 'bed_options' => 'required',
@@ -69,8 +73,10 @@ class RoomController extends Controller
     {
         //
         try{
+            $room = RoomType::with('room')->find($room->room_type_id);
+            $room->season = $room->season(now(), now())->get();
             return $this->baseResponse(
-                true,'get success',RoomType::with('room')->find($room->room_type_id), 200
+                true,'get success',$room, 200
             );
         }
         catch(\Exception $e ){
@@ -138,7 +144,7 @@ class RoomController extends Controller
         //
         try{
             $validated = $request->validate([
-                'number' => 'required|integer',
+                'number' => 'required|integer|unique:rooms',
                 'bed_type' => 'required',
                 'is_smoking' => 'required|boolean',
                 'capacity' => 'required|integer',
@@ -167,7 +173,7 @@ class RoomController extends Controller
         //
         try{
             $validated = $request->validate([
-                'number' => 'required|integer',
+                'number' => 'required|integer|unique:rooms,number,'.$request->number.',room_id',
                 'bed_type' => 'required',
                 'is_smoking' => 'required|boolean',
                 'capacity' => 'required|integer',
@@ -212,7 +218,7 @@ class RoomController extends Controller
     public function getRoomAvailability(Request $request){
         try{
             $validated = $request->validate([
-                'start_date' => 'required|date',
+                'start_date' => 'required|date|after_or_equal:'.date('Y-m-d'),
                 'end_date' => 'required|date|after:start_date',
             ]);
 
@@ -224,7 +230,7 @@ class RoomController extends Controller
             })->orWhere(function($query)use($validated){
                 $query->whereDate('start_date','<=',$validated['start_date'])
                 ->whereDate('end_date','>=',$validated['end_date']);
-            })->whereNot('status','cancelled')->with('reservationRooms')->get();
+            })->whereNot('status','cancelled')->whereNot('status','settled')->with('reservationRooms')->get();
 
             $roomTypes = RoomType::with([])->get();
             foreach($roomTypes as $roomType){
@@ -252,7 +258,6 @@ class RoomController extends Controller
                     foreach ($bedType as $type) {
                         $tempAvailable_rooms = $roomTypes->find($room_type_id)->available_rooms;
                         foreach($roomTypes->find($room_type_id)->available_rooms as $available_room) {
-
                             if($available_room['is_smoking']  && $available_room['bed_type'] == $type){
                                 $newSmoking = [[
                                     'is_smoking' => true,
@@ -264,7 +269,6 @@ class RoomController extends Controller
                                     return true;
                                 });
                                 $tempAvailable_rooms = array_merge($tempAvailable_rooms, $newSmoking);
-
                             }
                             if(!$available_room['is_smoking'] && $available_room['bed_type'] == $type){
                                 $newNonSmoking = [[
@@ -278,7 +282,6 @@ class RoomController extends Controller
                                 });
                                 $tempAvailable_rooms = array_merge($tempAvailable_rooms, $newNonSmoking);
                             }
-
                         }
                         $roomTypes->find($room_type_id)->available_rooms = $tempAvailable_rooms;
                     }
@@ -286,8 +289,6 @@ class RoomController extends Controller
                 });
                 return [];
             });
-
-
 
             return $this->baseResponse(
                 true,'get success',$roomTypes, 200

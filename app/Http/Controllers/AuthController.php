@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -56,6 +57,10 @@ class AuthController extends Controller
                 'no_identity' => 'required',
                 'password' => 'required',
                 'address' => 'required'
+            ]);
+            if(User::where('email', $request->email)->first())
+            throw ValidationException::withMessages([
+                'email' => ['Email has been taken'],
             ]);
             $request['password'] = Hash::make($request['password']);
             $request['role_id'] = Role::where('name', 'customer')->first()->role_id;
@@ -127,6 +132,24 @@ class AuthController extends Controller
         }
     }
 
+    public function doSendOTP(Request $request){
+        try{
+            $request->validate(['email' => 'required|email']);
+
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+            return $this->baseResponse(
+                true,'Update profile success',User::with('role','customer')->find($request->user()->user_id), 200
+            );
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage() ,null, 400
+            );
+        }
+    }
+
     public function doUpdateUserProfile(Request $request){
         try{
             $request->validate([
@@ -169,6 +192,44 @@ class AuthController extends Controller
 
             return $this->baseResponse(
                 true,'Update password success',User::with('role','customer')->find($request->user()->user_id), 200
+            );
+        }
+        catch(ValidationException $e ){
+            return $this->baseResponse(
+                false,$e->getMessage(),$e->errors(), 400
+            );
+        }
+        catch(\Exception $e ){
+            return $this->baseResponse(
+                false,$e->getMessage() ,null, 400
+            );
+        }
+    }
+
+    public function doResetPassword(Request $request){
+        try{
+            $request->validate([
+                'email' => 'required',
+                'phone_number' => 'required|required',
+                'name' => 'required|required',
+            ]);
+
+            $user = User::where('email',$request->email)->where('name',$request->name)->first();
+            if(!$user){
+                throw ValidationException::withMessages([
+                    'name' => ['Kredensial salah'],
+                ]);
+            }
+            if(!$user->customer || $user->customer->phone_number != $request->phone_number){
+                throw ValidationException::withMessages([
+                    'name' => ['Kredensial salah'],
+                ]);
+            }
+
+            $user->update(['password' => Hash::make($user->customer->no_identity)]);
+
+            return $this->baseResponse(
+                true,'Reset password success',$user, 200
             );
         }
         catch(ValidationException $e ){

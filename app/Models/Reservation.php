@@ -26,7 +26,7 @@ class Reservation extends Model
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class, 'reservation_services', 'reservation_id','service_id')
-            ->withPivot('fare','amount');
+            ->withPivot('fare','amount','created_at');
     }
 
 
@@ -51,7 +51,7 @@ class Reservation extends Model
         return $this->belongsTo(User::class, 'user_id','user_id');
     }
 
-    public function pic(): BelongsTo
+    public function sales(): BelongsTo
     {
         return $this->belongsTo(User::class,"pic","user_id");
     }
